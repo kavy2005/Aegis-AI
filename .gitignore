@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+*.db
+uploaded_reports/
+backend/uploaded_reports/
+node_modules/
+frontend/dist/
+frontend/.vite/
+ml/.venv/
+.DS_Store
+backend_broken_backup/
+frontend_backup/

@@ -1,0 +1,16 @@
+{
+  "_comment": "AEGIS Risk Support Score band -> 5-level classification. Not clinically validated -- tune freely.",
+  "bands": [
+    {"min": 0, "max": 20, "level": 1, "label": "Healthy / No Major Abnormality Detected"},
+    {"min": 21, "max": 40, "level": 2, "label": "Low Risk / Monitor"},
+    {"min": 41, "max": 60, "level": 3, "label": "Moderate Risk / Medical Consultation Recommended"},
+    {"min": 61, "max": 80, "level": 4, "label": "High Risk / Prompt Medical Attention Recommended"},
+    {"min": 81, "max": 100, "level": 5, "label": "Emergency / Immediate Professional Assistance Recommended"}
+  ],
+  "weights": {
+    "max_severity": 0.5,
+    "avg_severity": 0.3,
+    "count_factor_per_finding": 4,
+    "count_factor_cap": 20
+  }
+}

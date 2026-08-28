@@ -1,0 +1,8 @@
+# Optional: only needed for real report OCR (PDF/JPG/PNG upload) and the
+# optional LLM-polished explanation layer. The API, auth, DB, and risk engine
+# all work without this file -- reports/upload will return a clear 503 until
+# these are installed.
+pymupdf>=1.26.0
+pytesseract==0.3.13
+pillow>=11.0.0
+anthropic>=0.34.0

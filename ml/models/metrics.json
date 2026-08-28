@@ -1,0 +1,32 @@
+{
+  "model_type": "logreg",
+  "train_size": 1800,
+  "val_size": 600,
+  "test_size": 600,
+  "val_accuracy": 0.5617,
+  "features": [
+    "age",
+    "sex_male",
+    "hemoglobin",
+    "fasting_glucose",
+    "hba1c",
+    "ldl",
+    "hdl",
+    "triglycerides",
+    "creatinine",
+    "alt",
+    "ast",
+    "systolic_bp",
+    "diastolic_bp",
+    "heart_rate",
+    "spo2",
+    "bmi"
+  ],
+  "classes": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ]
+}

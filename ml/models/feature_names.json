@@ -1,0 +1,18 @@
+[
+  "age",
+  "sex_male",
+  "hemoglobin",
+  "fasting_glucose",
+  "hba1c",
+  "ldl",
+  "hdl",
+  "triglycerides",
+  "creatinine",
+  "alt",
+  "ast",
+  "systolic_bp",
+  "diastolic_bp",
+  "heart_rate",
+  "spo2",
+  "bmi"
+]
