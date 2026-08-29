@@ -32,3 +32,15 @@ def test_unrecognized_label_returns_none():
     assert normalize_label("Some Totally Unknown Test") is None
     assert normalize_label("") is None
     assert normalize_label(None) is None
+
+
+def test_real_report_parameters_previously_missing_from_dictionary():
+    # Regression: these six were extracted as rows but had no canonical
+    # mapping, so they were always scored as "unrecognized" (severity 0)
+    # regardless of how abnormal the actual value was.
+    assert normalize_label("VLDL") == "vldl"
+    assert normalize_label("Lipase") == "lipase"
+    assert normalize_label("Vitamin D (25-OH)") == "vitamin_d"
+    assert normalize_label("TSH") == "tsh"
+    assert normalize_label("CRP") == "crp"
+    assert normalize_label("RA Factor") == "ra_factor"

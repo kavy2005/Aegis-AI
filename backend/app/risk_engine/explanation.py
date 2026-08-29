@@ -43,6 +43,12 @@ PARAMETER_BLURBS = {
     "temperature": "Body temperature outside the typical range can indicate infection or other illness.",
     "respiratory_rate": "Respiratory rate outside the typical range can indicate a breathing or metabolic issue.",
     "bmi": "BMI is a general screening measure relating weight to height, not a full picture of health.",
+    "vldl": "VLDL carries triglycerides in the blood and is usually calculated from your triglyceride level; elevated levels relate to cardiovascular risk.",
+    "lipase": "Lipase is an enzyme from the pancreas; elevated levels can indicate pancreatic inflammation or other pancreatic issues.",
+    "vitamin_d": "Vitamin D supports bone and immune health; low levels are common and usually addressed through diet, sun exposure, or supplements.",
+    "tsh": "TSH regulates thyroid hormone production; high or low levels can indicate an underactive or overactive thyroid.",
+    "crp": "CRP is a marker of inflammation in the body; elevated levels can relate to infection, injury, or chronic inflammatory conditions.",
+    "ra_factor": "Rheumatoid factor is an antibody sometimes associated with rheumatoid arthritis and other autoimmune conditions, though it can also be elevated for unrelated reasons.",
 }
 
 _NEXT_STEPS_BY_LEVEL = {

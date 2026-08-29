@@ -51,7 +51,7 @@ PARAMETER_DICTIONARY = {
         "unit": "mg/dL", "category": "Glucose",
     },
     "hba1c": {
-        "aliases": ["hba1c", "hb a1c", "glycated hemoglobin", "glycosylated hemoglobin", "a1c"],
+        "aliases": ["hba1c", "hb a1c", "hbalc", "glycated hemoglobin", "glycosylated hemoglobin", "a1c"],
         "unit": "%", "category": "Glucose",
     },
     "total_cholesterol": {
@@ -68,6 +68,10 @@ PARAMETER_DICTIONARY = {
     },
     "triglycerides": {
         "aliases": ["triglycerides", "tg", "trigs"],
+        "unit": "mg/dL", "category": "Lipid",
+    },
+    "vldl": {
+        "aliases": ["vldl", "vldl cholesterol", "vldl-c"],
         "unit": "mg/dL", "category": "Lipid",
     },
     "creatinine": {
@@ -145,6 +149,26 @@ PARAMETER_DICTIONARY = {
     "bmi": {
         "aliases": ["bmi", "body mass index"],
         "unit": "kg/m2", "category": "Vitals",
+    },
+    "lipase": {
+        "aliases": ["lipase", "serum lipase"],
+        "unit": "U/L", "category": "Pancreatic",
+    },
+    "vitamin_d": {
+        "aliases": ["vitamin d", "vitamin d (25-oh)", "25-oh vitamin d", "25(oh)d", "vit d", "vit. d"],
+        "unit": "ng/mL", "category": "Vitamins",
+    },
+    "tsh": {
+        "aliases": ["tsh", "thyroid stimulating hormone", "s. tsh"],
+        "unit": "mIU/L", "category": "Thyroid",
+    },
+    "crp": {
+        "aliases": ["crp", "c-reactive protein", "c reactive protein", "hs-crp", "hscrp"],
+        "unit": "mg/L", "category": "Inflammation",
+    },
+    "ra_factor": {
+        "aliases": ["ra factor", "rheumatoid factor", "rf", "ra"],
+        "unit": "IU/mL", "category": "Autoimmune",
     },
 }
 

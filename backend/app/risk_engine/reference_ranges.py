@@ -31,6 +31,7 @@ DEFAULT_REFERENCE_RANGES = {
     "ldl": {"default": (0, 130)},
     "hdl": {"male": (40, 999), "female": (50, 999), "default": (40, 999)},
     "triglycerides": {"default": (0, 150)},
+    "vldl": {"default": (5, 40)},
     "creatinine": {"male": (0.7, 1.3), "female": (0.6, 1.1), "default": (0.6, 1.3)},
     "bun": {"default": (7, 20)},
     "urea": {"default": (15, 45)},
@@ -50,6 +51,11 @@ DEFAULT_REFERENCE_RANGES = {
     "temperature": {"default": (97.0, 99.0)},
     "respiratory_rate": {"default": (12, 20)},
     "bmi": {"default": (18.5, 24.9)},
+    "lipase": {"default": (13, 60)},
+    "vitamin_d": {"default": (30, 100)},
+    "tsh": {"default": (0.4, 4.0)},
+    "crp": {"default": (0, 5)},
+    "ra_factor": {"default": (0, 14)},
 }
 
 # Breaching these bounds marks a finding as clinically "critical" regardless

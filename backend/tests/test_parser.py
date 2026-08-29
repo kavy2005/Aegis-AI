@@ -1,3 +1,5 @@
+import pytest
+
 from app.ocr.parser import parse_report_text
 
 
@@ -79,3 +81,71 @@ def test_label_with_embedded_digits_not_mistaken_for_value():
     assert len(rows) == 1
     assert rows[0]["raw_label"] == "HbA1c"
     assert rows[0]["value"] == 8.1
+
+
+# --- Header/footer/metadata rejection (real report had genuine lab rows
+# alongside accreditation numbers, patient demographics, and timestamps;
+# the parser used to extract the metadata numbers as if they were results) ---
+
+@pytest.mark.parametrize("junk_line", [
+    "AN ISO 9001:2015 CERTIFIED LABORATORY",
+    "REG/REF: DWH 8515 PAGE 1 of 3",
+    "Patient: Anjana AGE/GENDER 48 Yrs./Male",
+    "COLL TIME 22 Aug 09:10",
+    "PRN. TIME 22 Aug 11:40",
+    "PLAIN 460473",
+    "PRINTED 22 Aug 2026 Page 1 of 3",
+    "UP TO 150 samples processed daily at this facility",
+    "Page 2 of 3",
+])
+def test_rejects_header_footer_metadata_lines(junk_line):
+    # None of these have a real measurement unit or a reference range, so
+    # none should be mistaken for a lab result no matter what number is in them.
+    assert parse_report_text(junk_line) == []
+
+
+def test_parenthetical_in_label_not_mistaken_for_value():
+    # The "25" in "(25-OH)" is part of the test name, not a result.
+    rows = parse_report_text("Vitamin D (25-OH) 40.7 ng/mL 30 - 100")
+    assert len(rows) == 1
+    assert rows[0]["raw_label"] == "Vitamin D (25-OH)"
+    assert rows[0]["value"] == 40.7
+    assert rows[0]["unit"] == "ng/mL"
+    assert rows[0]["reference_low"] == 30.0
+
+
+def test_full_real_report_pattern_extracts_only_genuine_lab_rows():
+    text = "\n".join([
+        "AN ISO 9001:2015 CERTIFIED LABORATORY",
+        "REG/REF: DWH 8515 PAGE 1 of 3",
+        "Patient: Anjana AGE/GENDER 48 Yrs./Male",
+        "COLL TIME 22 Aug 09:10 PRN. TIME 22 Aug 11:40",
+        "LIPID PROFILE",
+        "Triglycerides 217.27 mg/dL 30-200",
+        "HDL Cholesterol 38.34 mg/dL 40 - 60",
+        "VLDL 43 mg/dL 5 - 40",
+        "HAEMATOLOGY",
+        "Haemoglobin 12.2 g/dL 13-17",
+        "PLAIN 460473",
+        "PRINTED 22 Aug 2026 Page 1 of 3",
+        "BIOCHEMISTRY",
+        "Lipase 41.5 IU/L 13 - 60",
+        "Serum Creatinine 0.92 mg/dL 0.6-1.3",
+        "Vitamin D (25-OH) 40.7 ng/mL 30 - 100",
+        "TSH 1.5097 uIU/mL 0.4 - 4.0",
+        "UP TO 150 samples processed daily at this facility",
+        "PRINTED 22 Aug 2026 Page 2 of 3",
+    ])
+    rows = parse_report_text(text)
+    labels = {r["raw_label"] for r in rows}
+
+    expected = {
+        "Triglycerides", "HDL Cholesterol", "VLDL", "Haemoglobin",
+        "Lipase", "Serum Creatinine", "Vitamin D (25-OH)", "TSH",
+    }
+    assert labels == expected
+
+    values = {r["raw_label"]: r["value"] for r in rows}
+    assert values["Triglycerides"] == 217.27
+    assert values["Haemoglobin"] == 12.2
+    assert values["Vitamin D (25-OH)"] == 40.7
