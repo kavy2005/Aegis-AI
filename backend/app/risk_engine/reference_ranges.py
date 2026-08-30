@@ -24,6 +24,17 @@ DEFAULT_REFERENCE_RANGES = {
     "mcv": {"default": (80, 100)},
     "mch": {"default": (27, 33)},
     "mchc": {"default": (32, 36)},
+    "neutrophils": {"default": (40, 75)},
+    "lymphocytes": {"default": (20, 45)},
+    "mpv": {"default": (7.5, 11.5)},
+    "rdw": {"default": (11.5, 14.5)},
+    "rdw_sd": {"default": (39, 46)},
+    # mid_cells, plcr, pdw, pct: deliberately no default here -- these
+    # platelet/differential indices vary meaningfully by analyzer brand
+    # and method, with no consistent cross-lab "normal adult range" the
+    # way ALT or creatinine have. Classified only when the report supplies
+    # its own reference range; otherwise left as "unrecognized" rather than
+    # guessing a number that isn't backed by a clear convention.
     "fasting_glucose": {"default": (70, 100)},
     "random_glucose": {"default": (70, 140)},
     "hba1c": {"default": (4.0, 5.6)},
@@ -35,6 +46,7 @@ DEFAULT_REFERENCE_RANGES = {
     "creatinine": {"male": (0.7, 1.3), "female": (0.6, 1.1), "default": (0.6, 1.3)},
     "bun": {"default": (7, 20)},
     "urea": {"default": (15, 45)},
+    "uric_acid": {"male": (3.4, 7.0), "female": (2.4, 6.0), "default": (2.4, 7.0)},
     "egfr": {"default": (90, 200)},
     "alt": {"default": (7, 56)},
     "ast": {"default": (8, 48)},
@@ -52,8 +64,12 @@ DEFAULT_REFERENCE_RANGES = {
     "respiratory_rate": {"default": (12, 20)},
     "bmi": {"default": (18.5, 24.9)},
     "lipase": {"default": (13, 60)},
+    "amylase": {"default": (23, 85)},
     "vitamin_d": {"default": (30, 100)},
+    "vitamin_b12": {"default": (200, 900)},
     "tsh": {"default": (0.4, 4.0)},
+    "t3": {"default": (80, 200)},
+    "t4": {"default": (5.0, 12.0)},
     "crp": {"default": (0, 5)},
     "ra_factor": {"default": (0, 14)},
 }
@@ -96,14 +112,36 @@ def is_critical(canonical: str, value: float) -> bool:
     return False
 
 
-def severity_tier(value: float, low: float, high: float) -> Tuple[str, int]:
-    """Return (direction, severity 0-100) for a value against a range."""
-    if low <= value <= high:
-        return "normal", 0
-    if value > high:
+def severity_tier(value: float, low: Optional[float], high: Optional[float]) -> Tuple[str, int]:
+    """Return (direction, severity 0-100) for a value against a range.
+
+    Either bound may be None for a one-sided range -- the report-provided
+    "<38" or ">10" style range a lab prints when only one direction is
+    clinically meaningful for that test. At least one of low/high must be
+    given; callers (interpret_value) already guard against both being None
+    by returning "unrecognized" before this is called.
+    """
+    if low is not None and high is not None:
+        if low <= value <= high:
+            return "normal", 0
+        if value > high:
+            deviation = (value - high) / high if high > 0 else 1.0
+            direction = "high"
+        else:
+            deviation = (low - value) / low if low > 0 else 1.0
+            direction = "low"
+    elif high is not None:
+        # One-sided "less than X" range: no lower bound was provided, so
+        # there's nothing to flag as "low" -- only an excess over the
+        # upper bound is a deviation.
+        if value <= high:
+            return "normal", 0
         deviation = (value - high) / high if high > 0 else 1.0
         direction = "high"
     else:
+        # One-sided "greater than X" range: no upper bound was provided.
+        if value >= low:
+            return "normal", 0
         deviation = (low - value) / low if low > 0 else 1.0
         direction = "low"
 
@@ -128,11 +166,17 @@ def interpret_value(
     """
     Decide which range to use (report-provided range wins), then classify
     the value against it. Returns a dict describing the finding.
+
+    A report-provided range is honored even when only one side is given
+    (e.g. lab prints "<38" with no lower bound, or ">10" with no upper
+    bound) -- that is itself the report's real reference range, not a
+    partial/broken one, and discarding it in favor of the canonical
+    default would silently override what the lab actually printed.
     """
     source = None
     low, high = None, None
 
-    if report_low is not None and report_high is not None:
+    if report_low is not None or report_high is not None:
         low, high = report_low, report_high
         source = "report-provided reference range"
     elif canonical:
@@ -141,7 +185,7 @@ def interpret_value(
             low, high = default_range
             source = REFERENCE_SOURCE
 
-    if low is None or high is None:
+    if low is None and high is None:
         return {
             "flag": "unrecognized",
             "severity": 0,

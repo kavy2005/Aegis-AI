@@ -8,6 +8,7 @@ name per test. This is intentionally data, not code -- new parameters or
 aliases can be added here without touching the risk engine or the API.
 """
 from typing import Optional
+import re
 
 PARAMETER_DICTIONARY = {
     "hemoglobin": {
@@ -31,16 +32,58 @@ PARAMETER_DICTIONARY = {
         "unit": "%", "category": "CBC",
     },
     "mcv": {
-        "aliases": ["mcv", "mean corpuscular volume"],
+        "aliases": ["mcv", "mean corpuscular volume", "mean cell volume", "mcv (mean cell volume)"],
         "unit": "fL", "category": "CBC",
     },
     "mch": {
-        "aliases": ["mch", "mean corpuscular hemoglobin"],
+        "aliases": ["mch", "mean corpuscular hemoglobin", "mean corpus. haemoglobin",
+                    "mch (mean corpus. haemoglobin)"],
         "unit": "pg", "category": "CBC",
     },
     "mchc": {
-        "aliases": ["mchc", "mean corpuscular hemoglobin concentration"],
+        "aliases": ["mchc", "mean corpuscular hemoglobin concentration", "mean corpus. hb conc.",
+                    "mchc (mean corpus. hb conc.)"],
         "unit": "g/dL", "category": "CBC",
+    },
+    "neutrophils": {
+        "aliases": ["neutrophils", "neutrophil count", "neutrophils %", "neut", "polys"],
+        "unit": "%", "category": "CBC",
+    },
+    "lymphocytes": {
+        "aliases": ["lymphocytes", "lymphocyte count", "lymphocytes %", "lymph"],
+        "unit": "%", "category": "CBC",
+    },
+    "mid_cells": {
+        "aliases": ["mid", "mid cells", "mid%", "mid %"],
+        "unit": "%", "category": "CBC",
+    },
+    "plcr": {
+        "aliases": ["lpcr", "p-lcr", "plcr", "platelet large cell ratio"],
+        "unit": "%", "category": "CBC",
+    },
+    "mpv": {
+        "aliases": ["mpv", "mean platelet volume"],
+        "unit": "fL", "category": "CBC",
+    },
+    "pdw": {
+        "aliases": ["pdw", "platelet distribution width"],
+        "unit": "%", "category": "CBC",
+    },
+    "pct": {
+        "aliases": ["pct", "plateletcrit"],
+        "unit": "%", "category": "CBC",
+    },
+    "rdw": {
+        "aliases": ["rdw", "rdw-cv", "rdw cv", "red cell distribution width"],
+        "unit": "%", "category": "CBC",
+    },
+    "rdw_sd": {
+        # "RDWA" is treated as an OCR/formatting variant of RDW-SD (the
+        # hyphen dropped and "SD" run together) seen in the real report --
+        # a judgment call, not a standard abbreviation; verify against the
+        # source report if a lab genuinely uses "RDWA" to mean something else.
+        "aliases": ["rdw-sd", "rdw sd", "rdwsd", "rdwa"],
+        "unit": "fL", "category": "CBC",
     },
     "fasting_glucose": {
         "aliases": ["fasting glucose", "fasting blood glucose", "fbs", "fpg", "fasting blood sugar"],
@@ -84,6 +127,10 @@ PARAMETER_DICTIONARY = {
     },
     "urea": {
         "aliases": ["urea", "blood urea", "serum urea"],
+        "unit": "mg/dL", "category": "Kidney",
+    },
+    "uric_acid": {
+        "aliases": ["uric acid", "serum uric acid", "ua"],
         "unit": "mg/dL", "category": "Kidney",
     },
     "egfr": {
@@ -154,13 +201,29 @@ PARAMETER_DICTIONARY = {
         "aliases": ["lipase", "serum lipase"],
         "unit": "U/L", "category": "Pancreatic",
     },
+    "amylase": {
+        "aliases": ["amylase", "serum amylase"],
+        "unit": "U/L", "category": "Pancreatic",
+    },
     "vitamin_d": {
         "aliases": ["vitamin d", "vitamin d (25-oh)", "25-oh vitamin d", "25(oh)d", "vit d", "vit. d"],
         "unit": "ng/mL", "category": "Vitamins",
     },
+    "vitamin_b12": {
+        "aliases": ["vitamin b12", "serum vitamin b12", "vit b12", "vit. b12", "b12", "cobalamin"],
+        "unit": "pg/mL", "category": "Vitamins",
+    },
     "tsh": {
-        "aliases": ["tsh", "thyroid stimulating hormone", "s. tsh"],
+        "aliases": ["tsh", "thyroid stimulating hormone", "s. tsh", "serum tsh"],
         "unit": "mIU/L", "category": "Thyroid",
+    },
+    "t3": {
+        "aliases": ["t3", "serum t3", "triiodothyronine", "total t3"],
+        "unit": "ng/dL", "category": "Thyroid",
+    },
+    "t4": {
+        "aliases": ["t4", "serum t4", "thyroxine", "total t4"],
+        "unit": "\u00b5g/dL", "category": "Thyroid",
     },
     "crp": {
         "aliases": ["crp", "c-reactive protein", "c reactive protein", "hs-crp", "hscrp"],
@@ -204,6 +267,19 @@ def normalize_label(raw_label: str) -> Optional[str]:
         # No qualifier present -- default to fasting glucose as the most
         # commonly reported single glucose value. Documented limitation.
         return "fasting_glucose"
+
+    # "MCH" (Mean Corpuscular Hemoglobin) is a distinct CBC index from plain
+    # Hemoglobin -- but its parenthetical expansion as printed by many labs
+    # ("Mean Corpus. Haemoglobin") literally contains the word "haemoglobin",
+    # which is itself an alias of the "hemoglobin" canonical. Left to the
+    # generic substring fallback below, "haemoglobin" would be found first
+    # (its dictionary entry comes first) and MCH would be misclassified as
+    # plain Hemoglobin. Checked here as a whole word via \b so it can never
+    # match inside "MCHC", which is a separate, unrelated canonical.
+    if re.search(r"\bmch\b", cleaned):
+        return "mch"
+    if re.search(r"\bmchc\b", cleaned):
+        return "mchc"
 
     # Fall back to a substring match against known aliases for minor OCR noise
     # (extra words, punctuation) that an exact match would miss. Restricted to

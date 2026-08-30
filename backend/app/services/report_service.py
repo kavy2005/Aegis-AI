@@ -30,6 +30,26 @@ def analyze_findings(
         canonical = row.get("canonical_parameter")
         value = row.get("value")
         if value is None:
+            # IMPORTANT: append a placeholder rather than skipping this row.
+            # reports.py does zip(report.parameters, result["findings"]) by
+            # position -- dropping an entry here would shift every finding
+            # after it onto the wrong parameter. Flag "unrecognized" reuses
+            # the same "not scored" semantics interpret_value() already
+            # produces elsewhere, so compute_risk()/build_explanation() (both
+            # of which already filter on flag in ("high","low")) are
+            # unaffected -- this only fixes alignment, not scoring.
+            findings.append({
+                "raw_label": row.get("raw_label"),
+                "canonical_parameter": canonical,
+                "value": None,
+                "unit": row.get("unit"),
+                "flag": "unrecognized",
+                "severity": 0,
+                "reference_low": None,
+                "reference_high": None,
+                "reference_source": None,
+                "critical": False,
+            })
             continue
         interpretation = interpret_value(
             canonical,
