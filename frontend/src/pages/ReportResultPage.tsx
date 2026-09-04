@@ -6,6 +6,7 @@ import { AegisSignal } from '../components/AegisSignal';
 import { ParameterList } from '../components/ParameterList';
 import { StateBlock } from '../components/StateBlock';
 import { Disclaimer } from '../components/Disclaimer';
+import { CopilotPanel } from '../components/CopilotPanel';
 import type { ReportAnalysisResponse } from '../types/api';
 
 export function ReportResultPage() {
@@ -105,6 +106,17 @@ export function ReportResultPage() {
               </div>
             </div>
           )}
+
+          <div>
+            <CopilotPanel
+              reportContext={{
+                filename: data.filename,
+                risk: data.risk,
+                parameters: data.parameters,
+                explanation: data.explanation,
+              }}
+            />
+          </div>
         </div>
       </div>
 

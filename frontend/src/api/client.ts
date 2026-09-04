@@ -1,6 +1,7 @@
 import type {
   User, Patient, ReportUploadResponse, ReportAnalysisResponse,
   ReportSummary, HistoryPoint, MLPredictResponse, ParameterCorrection,
+  CopilotChatRequest, CopilotChatResponse,
 } from '../types/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -103,4 +104,7 @@ export const api = {
     request<MLPredictResponse>('/ml/predict', { method: 'POST', body: payload, auth: false }),
 
   healthStatus: () => request<{ status: string }>('/health/status', { auth: false }),
+
+  copilotChat: (payload: CopilotChatRequest) =>
+    request<CopilotChatResponse>('/copilot/chat', { method: 'POST', body: payload }),
 };

@@ -147,3 +147,35 @@ class MLPredictResponse(BaseModel):
     probabilities: Optional[dict] = None
     top_contributors: Optional[List[dict]] = None
     message: Optional[str] = None
+
+
+# ---------- Copilot ----------
+
+class CopilotMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
+
+class CopilotReportContext(BaseModel):
+    """Shape matches ReportAnalysisResponse's relevant fields exactly, so the
+    frontend can pass its already-fetched analysis response straight through
+    without reshaping anything."""
+    filename: Optional[str] = None
+    risk: Optional[RiskAssessmentOut] = None
+    parameters: List[ExtractedParameterOut] = []
+    explanation: Optional[dict] = None
+
+
+class CopilotChatRequest(BaseModel):
+    message: str
+    report_context: Optional[CopilotReportContext] = None
+    history: Optional[List[CopilotMessage]] = None
+
+
+class CopilotChatResponse(BaseModel):
+    reply: str
+    source: str  # "llm" or "rule_based"
+    disclaimer: str = (
+        "AEGIS AI Copilot shares general information only, not medical advice or a diagnosis. "
+        "Always consult a qualified healthcare professional about your results."
+    )

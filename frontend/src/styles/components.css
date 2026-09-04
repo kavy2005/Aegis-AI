@@ -425,3 +425,92 @@
   cursor: pointer;
   padding: 0;
 }
+
+/* ===== Copilot ===== */
+.copilot-panel {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.copilot-header {
+  border-bottom: 1px solid var(--divider);
+  padding-bottom: var(--space-3);
+}
+.copilot-subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+  color: #5B6864;
+}
+.copilot-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 120px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+}
+.copilot-empty {
+  color: #5B6864;
+  font-size: 14px;
+  padding: var(--space-3) 0;
+}
+.copilot-bubble {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.copilot-bubble.user {
+  align-self: flex-end;
+  background: var(--graphite);
+  color: var(--mineral-white);
+}
+.copilot-bubble.assistant {
+  align-self: flex-start;
+  background: var(--mineral-white);
+  border: 1px solid var(--divider);
+  color: var(--graphite);
+}
+.copilot-typing {
+  color: #5B6864;
+  font-style: italic;
+}
+.copilot-error {
+  margin: 0;
+}
+.copilot-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.copilot-chip {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--divider);
+  background: var(--white);
+  color: var(--teal-deep);
+  cursor: pointer;
+  transition: border-color 160ms var(--ease-instrument), background-color 160ms var(--ease-instrument);
+}
+.copilot-chip:hover:not(:disabled) {
+  border-color: var(--teal);
+  background: var(--mint);
+}
+.copilot-chip:disabled {
+  color: #9AA39F;
+  cursor: not-allowed;
+}
+.copilot-input-row {
+  display: flex;
+  gap: var(--space-2);
+}
+.copilot-input-row .text-input {
+  flex: 1;
+}

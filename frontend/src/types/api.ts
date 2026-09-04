@@ -102,3 +102,29 @@ export interface ParameterCorrection {
   value: number;
   unit?: string | null;
 }
+
+// ---------- Copilot ----------
+
+export interface CopilotMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface CopilotReportContext {
+  filename?: string | null;
+  risk?: RiskAssessment | null;
+  parameters: ExtractedParameter[];
+  explanation?: Explanation | null;
+}
+
+export interface CopilotChatRequest {
+  message: string;
+  report_context?: CopilotReportContext | null;
+  history?: CopilotMessage[] | null;
+}
+
+export interface CopilotChatResponse {
+  reply: string;
+  source: 'llm' | 'rule_based';
+  disclaimer: string;
+}

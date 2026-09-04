@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database.db import Base, engine
 from app.models import models  # noqa: F401 -- ensures models are registered before create_all
-from app.api import auth, reports, patients, health, ml
+from app.api import auth, reports, patients, health, ml, copilot
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,6 +28,7 @@ app.include_router(reports.router)
 app.include_router(patients.router)
 app.include_router(health.router)
 app.include_router(ml.router)
+app.include_router(copilot.router)
 
 
 @app.get("/")
