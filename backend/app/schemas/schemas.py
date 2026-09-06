@@ -94,6 +94,8 @@ class RiskAssessmentOut(BaseModel):
 
 class ReportAnalysisResponse(BaseModel):
     report_id: int
+    filename: str
+    raw_text_preview: str
     risk: RiskAssessmentOut
     parameters: List[ExtractedParameterOut]
     explanation: dict
