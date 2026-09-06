@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
 import { AppShell } from '../components/AppShell';
+import { ReportComparison } from '../components/ReportComparison';
 import { StateBlock } from '../components/StateBlock';
 import { levelMeta } from '../lib/riskLevels';
 import type { HistoryPoint } from '../types/api';
@@ -28,6 +29,7 @@ export function HistoryPage() {
   const [points, setPoints] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,6 +60,9 @@ export function HistoryPage() {
       cancelled = true;
     };
   }, []);
+
+  const newest = points[0];
+  const previous = points[1];
 
   return (
     <AppShell>
@@ -100,21 +105,56 @@ export function HistoryPage() {
       {!loading && !error && points.length > 0 && (
         <div className="stack">
           {points.length > 1 && (
-            <div>
-              <p className="section-title">Risk score over time</p>
+            <>
+              <div className="history-action-row">
+                <div>
+                  <p className="section-title">Compare reports</p>
+                  <p className="history-action-copy">
+                    See what changed between your two most recent analysed reports.
+                  </p>
+                </div>
 
-              <div className="card chart-card">
-                <Suspense
-                  fallback={
-                    <div className="state-sub">
-                      Loading chart…
-                    </div>
-                  }
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setComparisonOpen(true)}
                 >
-                  <HistoryChart points={[...points].reverse()} />
-                </Suspense>
+                  Compare latest reports
+                </button>
               </div>
-            </div>
+
+              {comparisonOpen && newest && previous && (
+                <ReportComparison
+                  older={{
+                    report_id: previous.report_id,
+                    date: previous.date,
+                    filename: previous.filename,
+                  }}
+                  newer={{
+                    report_id: newest.report_id,
+                    date: newest.date,
+                    filename: newest.filename,
+                  }}
+                  onClose={() => setComparisonOpen(false)}
+                />
+              )}
+
+              <div>
+                <p className="section-title">Risk score over time</p>
+
+                <div className="card chart-card">
+                  <Suspense
+                    fallback={
+                      <div className="state-sub">
+                        Loading chart…
+                      </div>
+                    }
+                  >
+                    <HistoryChart points={[...points].reverse()} />
+                  </Suspense>
+                </div>
+              </div>
+            </>
           )}
 
           <div>
@@ -154,9 +194,7 @@ export function HistoryPage() {
                       </div>
 
                       <div className="history-card-status">
-                        <span
-                          className="mono history-score"
-                        >
+                        <span className="mono history-score">
                           {point.score}/100
                         </span>
 

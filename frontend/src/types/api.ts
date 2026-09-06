@@ -83,8 +83,11 @@ export interface ReportSummary {
 export interface HistoryPoint {
   report_id: number;
   date: string;
+  filename: string;
   level: number;
   score: number;
+  risk_label: string;
+  abnormal_count: number;
   parameters: Record<string, number>;
 }
 
