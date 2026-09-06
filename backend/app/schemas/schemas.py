@@ -116,8 +116,11 @@ class ReportSummaryOut(BaseModel):
 class HistoryPoint(BaseModel):
     report_id: int
     date: datetime.datetime
+    filename: str
     level: int
     score: int
+    risk_label: str
+    abnormal_count: int
     parameters: dict
 
 

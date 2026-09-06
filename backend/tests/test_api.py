@@ -94,3 +94,75 @@ def test_analyze_refuses_when_zero_parameters_extracted(monkeypatch):
     # Must NEVER silently produce a fake "healthy" result when nothing was extracted.
     analyze_resp = client.post(f"/reports/{report_id}/analyze", headers=headers, json={})
     assert analyze_resp.status_code == 422
+
+
+def test_history_contains_report_metadata(monkeypatch):
+    def fake_extract_and_normalize(file_bytes, filename):
+        return {
+            "raw_text": "Hemoglobin: 10.2 g/dL (12.0-15.5)",
+            "extraction_method": "test_stub",
+            "rows": [
+                {
+                    "raw_label": "Hemoglobin",
+                    "value": 10.2,
+                    "unit": "g/dL",
+                    "reference_low": 12.0,
+                    "reference_high": 15.5,
+                    "canonical_parameter": "hemoglobin",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.api.reports.extract_and_normalize",
+        fake_extract_and_normalize,
+    )
+
+    headers = _register_and_login(
+        "history-metadata@example.com",
+        "StrongPass123",
+    )
+
+    upload_resp = client.post(
+        "/reports/upload",
+        headers=headers,
+        files={
+            "file": (
+                "annual_checkup.pdf",
+                b"%PDF-1.4 fake bytes",
+                "application/pdf",
+            )
+        },
+    )
+
+    assert upload_resp.status_code == 200
+
+    report_id = upload_resp.json()["report_id"]
+
+    analyze_resp = client.post(
+        f"/reports/{report_id}/analyze",
+        headers=headers,
+        json={},
+    )
+
+    assert analyze_resp.status_code == 200
+
+    history_resp = client.get(
+        "/patients/me/history",
+        headers=headers,
+    )
+
+    assert history_resp.status_code == 200
+
+    history = history_resp.json()
+
+    assert len(history) == 1
+
+    point = history[0]
+
+    assert point["report_id"] == report_id
+    assert point["filename"] == "annual_checkup.pdf"
+    assert point["score"] >= 0
+    assert point["risk_label"]
+    assert point["abnormal_count"] == 1
+    assert point["parameters"]["hemoglobin"] == 10.2
