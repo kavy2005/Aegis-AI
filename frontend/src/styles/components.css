@@ -514,3 +514,137 @@
 .copilot-input-row .text-input {
   flex: 1;
 }
+
+/* Health Memory timeline */
+
+.history-timeline {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.history-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.history-card-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-5);
+}
+
+.history-card-copy {
+  min-width: 0;
+}
+
+.history-card-date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: #5B6864;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+
+.history-latest {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border: 1px solid #D7E2DE;
+  border-radius: 999px;
+  color: #315C57;
+  background: #F3F7F5;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history-card-title {
+  margin: 0;
+  overflow: hidden;
+  color: #17201E;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-card-subtitle {
+  margin: 6px 0 0;
+  color: #5B6864;
+  font-size: 13px;
+}
+
+.history-card-status {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.history-score {
+  color: #17201E;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.history-risk {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 11px var(--space-5);
+  border-top: 1px solid #E8ECE7;
+  background: #FAFBF9;
+}
+
+.history-parameter-count {
+  color: #6C7773;
+  font-size: 11px;
+}
+
+.history-view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #315C57;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.history-view-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .history-card-main {
+    gap: var(--space-4);
+    padding: var(--space-4);
+  }
+
+  .history-card-title {
+    font-size: 15px;
+  }
+
+  .history-card-footer {
+    padding: 10px var(--space-4);
+  }
+
+  .history-score {
+    font-size: 13px;
+  }
+}

@@ -10,6 +10,20 @@ const HistoryChart = lazy(() =>
   import('../components/HistoryChart').then((m) => ({ default: m.HistoryChart }))
 );
 
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function abnormalLabel(count: number) {
+  if (count === 0) return 'No values need attention';
+  if (count === 1) return '1 value needs attention';
+  return `${count} values need attention`;
+}
+
 export function HistoryPage() {
   const [points, setPoints] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,17 +31,29 @@ export function HistoryPage() {
 
   useEffect(() => {
     let cancelled = false;
+
     api
       .getMyHistory()
       .then((res) => {
-        if (!cancelled) setPoints([...res].reverse());
+        if (!cancelled) {
+          setPoints([...res].reverse());
+        }
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof ApiError ? e.message : 'Could not load your history.');
+        if (!cancelled) {
+          setError(
+            e instanceof ApiError
+              ? e.message
+              : 'Could not load your health history.'
+          );
+        }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
+
     return () => {
       cancelled = true;
     };
@@ -35,69 +61,131 @@ export function HistoryPage() {
 
   return (
     <AppShell>
-      <p className="eyebrow hero-eyebrow" style={{ marginTop: 'var(--space-6)' }}>
-        Report history
-      </p>
-      <h1 className="hero-title" style={{ fontSize: 32, marginBottom: 'var(--space-6)' }}>
-        What changed
-      </h1>
+      <section className="hero">
+        <p className="eyebrow hero-eyebrow">Health memory</p>
 
-      {loading && <StateBlock title="Loading your history\u2026" />}
-      {!loading && error && <StateBlock variant="error" title="Couldn't load your history" subtitle={error} />}
+        <h1 className="hero-title">Your health over time.</h1>
+
+        <p className="hero-lede">
+          AEGIS keeps your analysed reports together so you can see how your
+          results change from one report to the next.
+        </p>
+      </section>
+
+      {loading && (
+        <StateBlock title="Loading your health history…" />
+      )}
+
+      {!loading && error && (
+        <StateBlock
+          variant="error"
+          title="Couldn't load your health history"
+          subtitle={error}
+        />
+      )}
 
       {!loading && !error && points.length === 0 && (
         <StateBlock
           title="No analysed reports yet"
-          subtitle="Once you analyse a report, its risk score will appear here over time."
+          subtitle="Once you analyse a laboratory report, AEGIS will start building your health history here."
+          action={{
+            label: 'Analyse a report',
+            onClick: () => {
+              window.location.href = '/analyze';
+            },
+          }}
         />
       )}
 
       {!loading && !error && points.length > 0 && (
         <div className="stack">
           {points.length > 1 && (
-            <div className="card chart-card">
-              <Suspense fallback={<div className="state-sub">Loading chart&hellip;</div>}>
-                <HistoryChart points={[...points].reverse()} />
-              </Suspense>
+            <div>
+              <p className="section-title">Risk score over time</p>
+
+              <div className="card chart-card">
+                <Suspense
+                  fallback={
+                    <div className="state-sub">
+                      Loading chart…
+                    </div>
+                  }
+                >
+                  <HistoryChart points={[...points].reverse()} />
+                </Suspense>
+              </div>
             </div>
           )}
 
-          <div className="card">
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {points.map((p) => {
-                const meta = levelMeta(p.level);
+          <div>
+            <p className="section-title">
+              Your reports
+            </p>
+
+            <div className="history-timeline">
+              {points.map((point, index) => {
+                const meta = levelMeta(point.level);
+                const isLatest = index === 0;
+
                 return (
-                  <li key={p.report_id} className="param-row" style={{ padding: '0' }}>
-                    <Link
-                      to={`/reports/${p.report_id}`}
-                      className="row-between"
-                      style={{ textDecoration: 'none', color: 'inherit', padding: 'var(--space-4)' }}
-                    >
-                      <span>
-                        <span className="mono" style={{ fontSize: 13, color: '#5B6864' }}>
-                          {new Date(p.date).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span className="mono" style={{ fontSize: 13 }}>
-                          {p.score}/100
-                        </span>
+                  <article
+                    key={point.report_id}
+                    className="card history-card"
+                  >
+                    <div className="history-card-main">
+                      <div className="history-card-copy">
+                        <div className="history-card-date">
+                          {formatDate(point.date)}
+
+                          {isLatest && (
+                            <span className="history-latest">
+                              Latest
+                            </span>
+                          )}
+                        </div>
+
+                        <h2 className="history-card-title">
+                          {point.filename}
+                        </h2>
+
+                        <p className="history-card-subtitle">
+                          {abnormalLabel(point.abnormal_count)}
+                        </p>
+                      </div>
+
+                      <div className="history-card-status">
                         <span
-                          className="mono"
-                          style={{ fontSize: 13, fontWeight: 600, color: meta.colorDeep }}
+                          className="mono history-score"
                         >
-                          {meta.short}
+                          {point.score}/100
                         </span>
+
+                        <span
+                          className="mono history-risk"
+                          style={{ color: meta.colorDeep }}
+                        >
+                          {point.risk_label || meta.short}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="history-card-footer">
+                      <span className="mono history-parameter-count">
+                        {Object.keys(point.parameters).length} parameters
                       </span>
-                    </Link>
-                  </li>
+
+                      <Link
+                        to={`/reports/${point.report_id}`}
+                        className="history-view-link"
+                      >
+                        View report
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                    </div>
+                  </article>
                 );
               })}
-            </ul>
+            </div>
           </div>
         </div>
       )}
