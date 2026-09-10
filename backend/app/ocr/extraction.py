@@ -1,33 +1,27 @@
 """
 Text extraction from an uploaded report file.
 
-PDFs: decided PAGE BY PAGE, not once for the whole document. Real lab
-reports are frequently "hybrid" PDFs: a digitally-generated letterhead,
-patient details, and footer disclaimer (real embedded text) wrapped around
-a SCANNED IMAGE of the actual results table.
+PDFs are processed page by page.
 
-Each page is OCR'd if EITHER:
-  - it has too little embedded text to plausibly be the results page, OR
-  - a large fraction of the page is covered by embedded images.
+If a page has enough embedded text, we use that text directly.
+OCR is used only when the page has too little embedded text.
+
+This avoids unnecessary OCR on image-heavy PDFs that already contain
+a usable text layer, while preserving OCR fallback for genuinely
+scanned/image-only pages.
 
 Images (jpg/jpeg/png): OCR directly.
 
-Both paths degrade gracefully: if Tesseract isn't installed on the host,
-we raise a clear, catchable error instead of crashing the request.
+If Tesseract isn't installed, OCR raises a clear, catchable error.
 """
 
 import io
 from typing import Tuple
 
 
-# A page with fewer embedded characters than this is treated as having no
-# real text layer for that page.
+# A page with fewer embedded characters than this is treated as having
+# insufficient text and will use OCR.
 MIN_CHARS_ASSUME_TEXT_PAGE = 40
-
-
-# If embedded images cover at least this fraction of a page's area,
-# OCR is used even when some embedded text exists.
-IMAGE_COVERAGE_OCR_THRESHOLD = 0.35
 
 
 class OCRUnavailableError(RuntimeError):
@@ -96,10 +90,13 @@ def _page_text_or_ocr(page) -> Tuple[str, bool]:
 
     coverage = _page_image_coverage(page)
 
-    needs_ocr = (
-        len(page_text) < MIN_CHARS_ASSUME_TEXT_PAGE
-        or coverage >= IMAGE_COVERAGE_OCR_THRESHOLD
-    )
+    # IMPORTANT:
+    # Do not force OCR merely because the page contains images.
+    # If the embedded text is substantial, use it directly.
+    #
+    # This prevents expensive OCR on reports where the page is visually
+    # an image but still contains a complete machine-readable text layer.
+    needs_ocr = len(page_text) < MIN_CHARS_ASSUME_TEXT_PAGE
 
     print(
         f"OCR DEBUG: page={page_number}, "
