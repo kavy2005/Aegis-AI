@@ -3,12 +3,16 @@ Text extraction from an uploaded report file.
 
 PDFs are processed page by page.
 
-If a page has enough embedded text, we use that text directly.
-OCR is used only when the page has too little embedded text.
+If a page has enough embedded text, that text is used directly.
 
-This avoids unnecessary OCR on image-heavy PDFs that already contain
-a usable text layer, while preserving OCR fallback for genuinely
-scanned/image-only pages.
+OCR is used for pages with very little embedded text. However, many lab
+reports contain a final image-only page containing reporting conditions,
+disclaimers, contact information, or other non-result material. If the
+previous pages already contain substantial report text, that final page
+does not need OCR and is skipped.
+
+This keeps OCR available for genuinely scanned reports while avoiding
+unnecessary OCR on image-only disclaimer pages.
 
 Images (jpg/jpeg/png): OCR directly.
 
@@ -20,8 +24,14 @@ from typing import Tuple
 
 
 # A page with fewer embedded characters than this is treated as having
-# insufficient text and will use OCR.
+# insufficient text and may use OCR.
 MIN_CHARS_ASSUME_TEXT_PAGE = 40
+
+
+# If earlier pages already contain this much embedded report text and the
+# final page has no embedded text, we assume the final page is likely
+# supplementary material such as reporting conditions/disclaimers.
+MIN_TEXT_BEFORE_SKIPPING_FINAL_PAGE = 1000
 
 
 class OCRUnavailableError(RuntimeError):
@@ -81,7 +91,10 @@ def _page_image_coverage(page) -> float:
     return min(1.0, covered / page_area)
 
 
-def _page_text_or_ocr(page) -> Tuple[str, bool]:
+def _page_text_or_ocr(
+    page,
+    skip_ocr: bool = False,
+) -> Tuple[str, bool]:
     """Returns (text_for_this_page, used_ocr_for_this_page)."""
 
     page_number = page.number + 1
@@ -90,25 +103,29 @@ def _page_text_or_ocr(page) -> Tuple[str, bool]:
 
     coverage = _page_image_coverage(page)
 
-    # IMPORTANT:
-    # Do not force OCR merely because the page contains images.
-    # If the embedded text is substantial, use it directly.
-    #
-    # This prevents expensive OCR on reports where the page is visually
-    # an image but still contains a complete machine-readable text layer.
     needs_ocr = len(page_text) < MIN_CHARS_ASSUME_TEXT_PAGE
 
     print(
         f"OCR DEBUG: page={page_number}, "
         f"text_chars={len(page_text)}, "
         f"image_coverage={coverage:.2f}, "
-        f"needs_ocr={needs_ocr}",
+        f"needs_ocr={needs_ocr}, "
+        f"skip_ocr={skip_ocr}",
         flush=True,
     )
 
     if not needs_ocr:
         print(
             f"OCR DEBUG: page={page_number} using embedded text",
+            flush=True,
+        )
+
+        return page_text, False
+
+    if skip_ocr:
+        print(
+            f"OCR DEBUG: page={page_number} skipping OCR "
+            f"(likely supplementary/final page)",
             flush=True,
         )
 
@@ -170,8 +187,10 @@ def _extract_pdf_text(pdf_bytes: bytes) -> Tuple[str, bool]:
         filetype="pdf",
     )
 
+    total_pages = len(doc)
+
     print(
-        f"OCR DEBUG: PDF opened, pages={len(doc)}",
+        f"OCR DEBUG: PDF opened, pages={total_pages}",
         flush=True,
     )
 
@@ -179,7 +198,36 @@ def _extract_pdf_text(pdf_bytes: bytes) -> Tuple[str, bool]:
     used_ocr = False
 
     for page in doc:
-        page_text, page_used_ocr = _page_text_or_ocr(page)
+        page_number = page.number + 1
+
+        # Get embedded text before deciding whether OCR is necessary.
+        page_text = page.get_text().strip()
+
+        # A final page with no embedded text is often a disclaimer,
+        # reporting-conditions page, contact page, or other supplementary
+        # material. If substantial report text already exists before it,
+        # don't waste a slow OCR operation on that page.
+        is_final_page = page_number == total_pages
+
+        skip_final_page_ocr = (
+            is_final_page
+            and len(page_text) < MIN_CHARS_ASSUME_TEXT_PAGE
+            and sum(len(part) for part in text_parts)
+            >= MIN_TEXT_BEFORE_SKIPPING_FINAL_PAGE
+        )
+
+        if skip_final_page_ocr:
+            print(
+                f"OCR DEBUG: page={page_number} is final page with "
+                f"little/no embedded text and previous report text is "
+                f"substantial; OCR will be skipped",
+                flush=True,
+            )
+
+        page_text, page_used_ocr = _page_text_or_ocr(
+            page,
+            skip_ocr=skip_final_page_ocr,
+        )
 
         text_parts.append(page_text)
 
